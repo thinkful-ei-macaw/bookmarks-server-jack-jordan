@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const xss = require('xss');
 const logger = require('../logger');
@@ -62,7 +63,7 @@ bookmarksRouter
         logger.info(`Bookmark with id of ${bookmark.id} created`);
         res
           .status(201)
-          .location(`bookmarks/${bookmark.id}`)
+          .location(path.posix.join(req.originalUrl + `/${bookmark.id}`))
           .json(serializeBookmark(bookmark));
       }
     );

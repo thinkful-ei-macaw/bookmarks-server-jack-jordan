@@ -22,11 +22,11 @@ describe('app, bookmarks-router', () => {
 
   afterEach('clean up the table', () => db('bookmarks').truncate());
 
-  describe('GET /bookmarks', () => {
+  describe('GET /api/bookmarks', () => {
     context(`given there are no bookmarks in the database`, () => {
       it(`responds with 200 and an empty list`, () => {
         return supertest(app)
-          .get('/bookmarks')
+          .get('/api/bookmarks')
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .expect(200, []);
       });
@@ -41,7 +41,7 @@ describe('app, bookmarks-router', () => {
 
       it('should return a list of bookmarks', () => {
         return supertest(app)
-          .get('/bookmarks')
+          .get('/api/bookmarks')
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .expect(200)
           .expect('Content-Type', /json/)
@@ -68,7 +68,7 @@ describe('app, bookmarks-router', () => {
 
       it('removes XSS attack content', () => {
         return supertest(app)
-          .get('/bookmarks')
+          .get('/api/bookmarks')
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .expect(200)
           .expect(res => {
@@ -81,7 +81,7 @@ describe('app, bookmarks-router', () => {
     });
   });
 
-  describe('GET /bookmarks/:id', () => {
+  describe('GET /api/bookmarks/:id', () => {
     context(`given there are bookmarks in the database`, () => {
       const testBookmarks = makeBookmarksArray();
       beforeEach('insert bookmarks', () => {
@@ -91,7 +91,7 @@ describe('app, bookmarks-router', () => {
       it('should return a specific bookmark with id', () => {
         const bookmarkId = 1;
         return supertest(app)
-          .get(`/bookmarks/${bookmarkId}`)
+          .get(`/api/bookmarks/${bookmarkId}`)
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .expect(200)
           .expect('Content-Type', /json/)
@@ -108,7 +108,7 @@ describe('app, bookmarks-router', () => {
       });
       it('should return an error if id is invalid', () => {
         return supertest(app)
-          .get('/bookmarks/12345678')
+          .get('/api/bookmarks/12345678')
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .expect(404);
       });
@@ -123,7 +123,7 @@ describe('app, bookmarks-router', () => {
 
       it('removes CSS attack content', () => {
         return supertest(app)
-          .get(`/bookmarks/${maliciousBookmark.id}`)
+          .get(`/api/bookmarks/${maliciousBookmark.id}`)
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .expect(200)
           .expect(res => {
@@ -136,7 +136,7 @@ describe('app, bookmarks-router', () => {
     });
   });
 
-  describe('POST /bookmarks', () => {
+  describe('POST /api/bookmarks', () => {
     const validBookmark = {
       title: 'Google',
       site_url: 'https://www.google.com/',
@@ -146,7 +146,7 @@ describe('app, bookmarks-router', () => {
 
     it('should create a new bookmark when all params valid', () => {
       return supertest(app)
-        .post('/bookmarks')
+        .post('/api/bookmarks')
         .set('Authorization', 'bearer ' + process.env.API_KEY)
         .send(validBookmark)
         .expect(201)
@@ -157,11 +157,11 @@ describe('app, bookmarks-router', () => {
             validBookmark.site_description
           );
           expect(res.body.rating).to.eql(validBookmark.rating);
-          expect(res.headers.location).to.eql(`bookmarks/${res.body.id}`);
+          expect(res.headers.location).to.eql(`/api/bookmarks/${res.body.id}`);
         })
         .then(res =>
           supertest(app)
-            .get(`/bookmarks/${res.body.id}`)
+            .get(`/api/bookmarks/${res.body.id}`)
             .set('Authorization', 'bearer ' + process.env.API_KEY)
             .expect(res.body)
         );
@@ -171,7 +171,7 @@ describe('app, bookmarks-router', () => {
       it(`should send back a 400 error if ${key} is not provided`, () => {
         const invalidBookmark = { ...validBookmark, [key]: '' };
         return supertest(app)
-          .post('/bookmarks')
+          .post('/api/bookmarks')
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .send(invalidBookmark)
           .expect(400);
@@ -181,7 +181,7 @@ describe('app, bookmarks-router', () => {
     it('should send back a 400 error if rating is not between 1 and 5', () => {
       const invalidBookmark = { ...validBookmark, rating: 500 };
       return supertest(app)
-        .post('/bookmarks')
+        .post('/api/bookmarks')
         .set('Authorization', 'bearer ' + process.env.API_KEY)
         .send(invalidBookmark)
         .expect(400);
@@ -190,7 +190,7 @@ describe('app, bookmarks-router', () => {
     it('should send back a 400 error is the url is less than 5 chars', () => {
       const invalidBookmark = { ...validBookmark, site_url: 'http' };
       return supertest(app)
-        .post('/bookmarks')
+        .post('/api/bookmarks')
         .set('Authorization', 'bearer ' + process.env.API_KEY)
         .send(invalidBookmark)
         .expect(400);
@@ -199,7 +199,7 @@ describe('app, bookmarks-router', () => {
     it('removes XSS attack content from a response', () => {
       const { maliciousBookmark, expectedBookmark } = makeMaliciousBookmark();
       return supertest(app)
-        .post('/bookmarks')
+        .post('/api/bookmarks')
         .set('Authorization', 'bearer ' + process.env.API_KEY)
         .send(maliciousBookmark)
         .expect(201)
@@ -222,7 +222,7 @@ describe('app, bookmarks-router', () => {
       it('deletes a bookmark when provided a valid id', () => {
         const bookmarkId = 2;
         return supertest(app)
-          .delete(`/bookmarks/${bookmarkId}`)
+          .delete(`/api/bookmarks/${bookmarkId}`)
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .expect(204);
       });
@@ -232,7 +232,7 @@ describe('app, bookmarks-router', () => {
       it('sends back a 404 error when bookmark with id cannot be found', () => {
         const invalidId = 123456;
         return supertest(app)
-          .delete(`/bookmarks/${invalidId}`)
+          .delete(`/api/bookmarks/${invalidId}`)
           .set('Authorization', 'bearer ' + process.env.API_KEY)
           .expect(404);
       });
